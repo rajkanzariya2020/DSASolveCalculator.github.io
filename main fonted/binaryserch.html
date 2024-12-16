@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search Tree Visualization</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --color-background: #0f1020;
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-accent: #e74c3c;
+            --color-text-light: #f1f1f4;
+            --color-text-dark: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            min-width: 320px; /* Minimum width for mobile devices */
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-light);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .main-title {
+            text-align: center;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 10px;
+            justify-content: center;
+        }
+
+        input, button {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            background: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        input {
+            max-width: 120px;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .tree-container {
+            width: 100%;
+            height: 300px; /* Reduced height for better mobile view */
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            position: relative;
+            overflow: auto;
+            margin-bottom: 15px;
+        }
+
+        .tree-node {
+            position: absolute;
+            width: 40px; /* Slightly smaller nodes for better mobile fit */
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            font-size: 0.9rem;
+        }
+
+        .tree-node.highlight {
+            background-color: var(--color-secondary);
+            border-color: white;
+        }
+
+        .tree-node.search-target {
+            background-color: var(--color-accent);
+        }
+
+        .tree-edge {
+            position: absolute;
+            background-color: rgba(255,255,255,0.3);
+            transform-origin: top left;
+        }
+
+        #step-log {
+            max-height: 150px; /* Reduced max height */
+            overflow-y: auto;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .step-entry {
+            background: rgba(255,255,255,0.1);
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        #current-step-info {
+            text-align: center;
+            margin: 10px 0;
+            color: var(--color-secondary);
+            font-size: 1rem;
+        }
+
+        /* Responsive Adjustments */
+        @media screen and (max-width: 600px) {
+            .main-title {
+                font-size: 2rem;
+            }
+
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input, button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            .tree-container {
+                height: 250px;
+            }
+
+            .tree-node {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media screen and (max-width: 400px) {
+            .app-container {
+                padding: 10px;
+            }
+
+            .main-title {
+                font-size: 1.7rem;
+            }
+
+            .tree-container {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1 class="main-title">Binary Search Tree Visualization</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <input type="number" id="node-value" placeholder="Node Value">
+                <button onclick="insertNode()">Insert Node</button>
+                <button onclick="deleteNode()">Delete Node</button>
+                <button onclick="searchNode()">Search Node</button>
+            </div>
+        </div>
+
+        <div id="current-step-info"></div>
+
+        <div id="tree-container" class="tree-container"></div>
+
+        <div id="step-log"></div>
+    </div>
+
+    <script>
+        // The JavaScript remains exactly the same as in the original file
+        class TreeNode {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        class BinarySearchTree {
+            constructor() {
+                this.root = null;
+            }
+
+            insert(value) {
+                const newNode = new TreeNode(value);
+                
+                if (!this.root) {
+                    this.root = newNode;
+                    return this.root;
+                }
+
+                let current = this.root;
+                while (true) {
+                    if (value === current.value) return null; // No duplicates
+
+                    if (value < current.value) {
+                        if (!current.left) {
+                            current.left = newNode;
+                            return current.left;
+                        }
+                        current = current.left;
+                    } else {
+                        if (!current.right) {
+                            current.right = newNode;
+                            return current.right;
+                        }
+                        current = current.right;
+                    }
+                }
+            }
+
+            search(value) {
+                let current = this.root;
+                while (current) {
+                    if (value === current.value) return current;
+                    current = value < current.value ? current.left : current.right;
+                }
+                return null;
+            }
+
+            delete(value) {
+                this.root = this.deleteNode(this.root, value);
+            }
+
+            deleteNode(node, value) {
+                if (!node) return null;
+
+                if (value < node.value) {
+                    node.left = this.deleteNode(node.left, value);
+                    return node;
+                } else if (value > node.value) {
+                    node.right = this.deleteNode(node.right, value);
+                    return node;
+                }
+
+                // Node to delete found
+                if (!node.left) return node.right;
+                if (!node.right) return node.left;
+
+                // Node with two children: Get the inorder successor
+                let successor = this.findMinNode(node.right);
+                node.value = successor.value;
+                node.right = this.deleteNode(node.right, successor.value);
+                return node;
+            }
+
+            findMinNode(node) {
+                while (node.left) node = node.left;
+                return node;
+            }
+        }
+
+        const bst = new BinarySearchTree();
+        const treeContainer = document.getElementById('tree-container');
+        const stepLog = document.getElementById('step-log');
+        const currentStepInfo = document.getElementById('current-step-info');
+
+        function addStepLog(message) {
+            const stepEntry = document.createElement('div');
+            stepEntry.className = 'step-entry';
+            stepEntry.innerHTML = `<i class="fas fa-code-branch"></i> ${message}`;
+            stepLog.insertBefore(stepEntry, stepLog.firstChild);
+        }
+
+        function visualizeTree(node, x = 300, y = 50, horizontalSpacing = 200) {
+            // Clear previous visualization
+            treeContainer.innerHTML = '';
+
+            function drawNode(node, x, y, depth = 0) {
+                if (!node) return;
+
+                // Create node element
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'tree-node';
+                nodeElement.textContent = node.value;
+                nodeElement.style.left = `${x}px`;
+                nodeElement.style.top = `${y}px`;
+
+                // Draw edges
+                if (node.left) {
+                    const leftX = x - horizontalSpacing / (depth + 1);
+                    const leftY = y + 100;
+                    const edge = document.createElement('div');
+                    edge.className = 'tree-edge';
+                    const length = Math.sqrt(
+                        Math.pow(leftX - x, 2) + Math.pow(leftY - y, 2)
+                    );
+                    const angle = Math.atan2(leftY - y, leftX - x) * 180 / Math.PI;
+                    
+                    edge.style.width = `${length}px`;
+                    edge.style.height = '2px';
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    edge.style.left = `${x + 25}px`;
+                    edge.style.top = `${y + 25}px`;
+                    
+                    treeContainer.appendChild(edge);
+                    drawNode(node.left, leftX, leftY, depth + 1);
+                }
+
+                if (node.right) {
+                    const rightX = x + horizontalSpacing / (depth + 1);
+                    const rightY = y + 100;
+                    const edge = document.createElement('div');
+                    edge.className = 'tree-edge';
+                    const length = Math.sqrt(
+                        Math.pow(rightX - x, 2) + Math.pow(rightY - y, 2)
+                    );
+                    const angle = Math.atan2(rightY - y, rightX - x) * 180 / Math.PI;
+                    
+                    edge.style.width = `${length}px`;
+                    edge.style.height = '2px';
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    edge.style.left = `${x + 25}px`;
+                    edge.style.top = `${y + 25}px`;
+                    
+                    treeContainer.appendChild(edge);
+                    drawNode(node.right, rightX, rightY, depth + 1);
+                }
+
+                treeContainer.appendChild(nodeElement);
+            }
+
+            drawNode(node);
+        }
+
+        function insertNode() {
+            const valueInput = document.getElementById('node-value');
+            const value = parseInt(valueInput.value);
+
+            if (isNaN(value)) {
+                alert('Please enter a valid number');
+                return;
+            }
+
+            const insertedNode = bst.insert(value);
+            
+            if (insertedNode) {
+                addStepLog(`Inserted node with value ${value}`);
+                visualizeTree(bst.root);
+                valueInput.value = '';
+            } else {
+                addStepLog(`Node with value ${value} already exists`);
+            }
+        }
+
+        function deleteNode() {
+            const valueInput = document.getElementById('node-value');
+            const value = parseInt(valueInput.value);
+
+            if (isNaN(value)) {
+                alert('Please enter a valid number');
+                return;
+            }
+
+            bst.delete(value);
+            addStepLog(`Deleted node with value ${value}`);
+            visualizeTree(bst.root);
+            valueInput.value = '';
+        }
+
+        function searchNode() {
+            const valueInput = document.getElementById('node-value');
+            const value = parseInt(valueInput.value);
+
+            if (isNaN(value)) {
+                alert('Please enter a valid number');
+                return;
+            }
+
+            const node = bst.search(value);
+            if (node) {
+                addStepLog(`Node with value ${value} found`);
+                currentStepInfo.textContent = `Node found: ${value}`;
+                
+                // Visualize tree with found node highlighted
+                visualizeTree(bst.root);
+                const nodeElements = document.querySelectorAll('.tree-node');
+                nodeElements.forEach(el => {
+                    if (el.textContent == value) {
+                        el.classList.add('highlight');
+                    }
+                });
+            } else {
+                addStepLog(`Node with value ${value} not found`);
+                currentStepInfo.textContent = `Node not found: ${value}`;
+            }
+
+            valueInput.value = '';
+        }
+
+        // Optional: Initialize with some default nodes
+        bst.insert(10);
+        bst.insert(5);
+        bst.insert(15);
+        bst.insert(3);
+        bst.insert(7);
+        bst.insert(12);
+        bst.insert(18);
+        visualizeTree(bst.root);
+    </script>
+</body>
+</html>

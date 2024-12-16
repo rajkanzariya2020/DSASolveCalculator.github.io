@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radix Sort Visualization</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Modern CSS Reset */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Color Palette */
+            --color-background: #0f1020;
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-accent: #e74c3c;
+            --color-text-light: #f1f1f4;
+            --color-text-dark: #2c3e50;
+
+            /* Responsive Typography */
+            --font-size-base: 16px;
+            --font-size-sm: 14px;
+            --font-size-lg: 18px;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-light);
+            line-height: 1.6;
+            font-size: var(--font-size-base);
+        }
+
+        /* Responsive Container */
+        .app-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Responsive Title */
+        .main-title {
+            text-align: center;
+            font-size: clamp(2rem, 5vw, 3rem);
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Flexible Grid Layout */
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 900px) {
+            .visualization-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Responsive Algorithm Section */
+        .algorithm-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 1.25rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Responsive Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .controls input,
+        .controls select,
+        .controls button {
+            flex: 1 1 calc(33.333% - 0.75rem);
+            min-width: 150px;
+            max-width: 250px;
+            padding: 0.625rem;
+            border-radius: 5px;
+            border: none;
+            background: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: var(--font-size-sm);
+        }
+
+        .controls button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Responsive Array Visualization */
+        #array-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: clamp(200px, 50vh, 400px);
+            gap: 4px;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .array-bar {
+            width: clamp(15px, 4vw, 30px);
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
+            font-size: var(--font-size-sm);
+        }
+
+        /* Responsive Complexity Section */
+        .complexity-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .complexity-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .complexity-card {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .complexity-card h4 {
+            margin-bottom: 0.5rem;
+            font-size: var(--font-size-lg);
+        }
+
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 600px) {
+            .controls input,
+            .controls select,
+            .controls button {
+                flex-basis: 100%;
+            }
+
+            .complexity-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1 class="main-title">Radix Sort Visualization</h1>
+        
+        <div class="visualization-grid">
+            <div class="algorithm-section">
+                <!-- Controls for array generation and sorting -->
+                <div class="controls">
+                    <select id="generation-type" aria-label="Generation Type">
+                        <option value="manual">Manual Input</option>
+                        <option value="random" selected>Random Numbers</option>
+                    </select>
+                    <input type="number" id="array-size" placeholder="Array Size (5-50)" 
+                           min="5" max="50" value="10" aria-label="Array Size">
+                    <input type="number" id="min-value" placeholder="Min Value" value="1" aria-label="Minimum Value">
+                    <input type="number" id="max-value" placeholder="Max Value" value="999" aria-label="Maximum Value">
+                    <input type="text" id="array-input" placeholder="Manual Numbers (comma-separated)" 
+                           aria-label="Manual Array Input">
+                    
+                    <button onclick="generateArray()" aria-label="Generate Array">Generate Array</button>
+                    <button onclick="startRadixSort()" aria-label="Start Sorting">Start Sort</button>
+                    <button onclick="stopSorting()" style="background-color: #e74c3c;" aria-label="Stop Sorting">Stop</button>
+                </div>
+
+                <!-- Array visualization container -->
+                <div id="array-container"></div>
+            </div>
+
+            <div class="algorithm-section">
+                <!-- Algorithmic information and complexity details -->
+                <div class="complexity-section">
+                    <h3>Radix Sort Complexity</h3>
+                    <div class="complexity-details">
+                        <div class="complexity-card">
+                            <h4>Time Complexity</h4>
+                            <p>O(d * (n + k))</p>
+                        </div>
+                        <div class="complexity-card">
+                            <h4>Space Complexity</h4>
+                            <p>O(n + k)</p>
+                        </div>
+                        <div class="complexity-card">
+                            <h4>Stability</h4>
+                            <p>Stable</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Global state management
+    // Global variables to track sorting state
+let array = [];          // Current array being sorted
+let sortingInProgress = false;  // Flag to prevent multiple sort initiations
+let currentStep = 0;     // Current visualization step
+let steps = [];          // Steps of the sorting process
+
+/**
+ * Generate an array based on user input
+ * Supports both random and manual array generation
+ */
+function generateArray() {
+    const generationType = document.getElementById('generation-type').value;
+    const arraySize = parseInt(document.getElementById('array-size').value);
+    const minValue = parseInt(document.getElementById('min-value').value);
+    const maxValue = parseInt(document.getElementById('max-value').value);
+    const manualInput = document.getElementById('array-input').value;
+
+    // Reset visualization
+    resetVisualization();
+
+    // Generate array based on selected method
+    if (generationType === 'manual') {
+        // Parse manual input
+        array = manualInput 
+            ? manualInput.split(',').map(num => parseInt(num.trim()))
+            : [];
+
+        // Validate input
+        if (array.some(isNaN)) {
+            alert('Please enter valid numbers');
+            return;
+        }
+    } else {
+        // Generate random array
+        array = generateRandomArray(arraySize, minValue, maxValue);
+    }
+
+    // Render the generated array
+    renderArray(array);
+}
+
+/**
+ * Create an array of random numbers within specified range
+ * @param {number} size - Number of elements
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @returns {number[]} Generated random array
+ */
+function generateRandomArray(size, min, max) {
+    return Array.from({length: size}, () => 
+        Math.floor(Math.random() * (max - min + 1)) + min
+    );
+}
+
+/**
+ * Render the array as visual bars
+ * @param {number[]} arr - Array to visualize
+ * @param {number[]} highlightIndices - Indices to highlight
+ * @param {number[]} sortedIndices - Indices of sorted elements
+ */
+function renderArray(arr, highlightIndices = [], sortedIndices = []) {
+    const arrayContainer = document.getElementById('array-container');
+    arrayContainer.innerHTML = '';
+
+    const maxVal = Math.max(...arr);
+    
+    arr.forEach((value, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'array-bar';
+        
+        // Set bar height proportional to value
+        bar.style.height = `${(value / maxVal) * 250}px`;
+        bar.textContent = value;
+
+        // Apply highlighting
+        if (highlightIndices.includes(index)) {
+            bar.classList.add('comparing');
+        }
+
+        if (sortedIndices.includes(index)) {
+            bar.classList.add('sorted');
+        }
+
+        arrayContainer.appendChild(bar);
+    });
+}
+
+/**
+ * Counting sort implementation for a specific digit place
+ * @param {number[]} arr - Array to sort
+ * @param {number} exp - Current digit place (1, 10, 100, etc.)
+ * @returns {number[]} Sorted array for current digit
+ */
+function countingSort(arr, exp) {
+    const n = arr.length;
+    const output = new Array(n).fill(0);
+    const count = new Array(10).fill(0);
+
+    // Count occurrences of digits
+    for (let i = 0; i < n; i++) {
+        const index = Math.floor(arr[i] / exp) % 10;
+        count[index]++;
+    }
+
+    // Cumulative count for stable positioning
+    for (let i = 1; i < 10; i++) {
+        count[i] += count[i - 1];
+    }
+
+    // Build output array
+    for (let i = n - 1; i >= 0; i--) {
+        const index = Math.floor(arr[i] / exp) % 10;
+        output[count[index] - 1] = arr[i];
+        count[index]--;
+    }
+
+    return output;
+}
+
+/**
+ * Radix Sort main implementation
+ * @returns {number[]} Fully sorted array
+ */
+async function radixSort() {
+    let arr = [...array];
+    const max = Math.max(...arr);
+
+    // Iterate through each digit place
+    for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
+        // Perform counting sort for current digit
+        arr = countingSort(arr, exp);
+
+        // Visualize current state
+        renderArray(arr);
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    return arr;
+}
+
+/**
+ * Initiate the Radix Sort process
+ */
+async function startRadixSort() {
+    if (sortingInProgress || array.length === 0) return;
+
+    sortingInProgress = true;
+    const sortedArray = await radixSort();
+    renderArray(sortedArray);
+    sortingInProgress = false;
+}
+
+/**
+ * Stop ongoing sorting process
+ */
+function stopSorting() {
+    sortingInProgress = false;
+}
+
+/**
+ * Reset visualization state
+ */
+function resetVisualization() {
+    sortingInProgress = false;
+    currentStep = 0;
+    steps = [];
+}
+
+// Initialize the application when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    generateArray();  // Generate initial random array
+});
+     </script>
+</body>
+</html>

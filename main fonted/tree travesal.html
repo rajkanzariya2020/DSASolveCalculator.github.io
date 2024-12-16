@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Binary Tree Traversal Visualizer</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --color-primary: #4a4e69;
+            --color-secondary: #22577a;
+            --color-accent: #57cc99;
+            --color-text: #f1f1f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--color-text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .title {
+            text-align: center;
+            color: var(--color-accent);
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        .input-section {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        input, select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--color-secondary);
+            background-color: rgba(255,255,255,0.1);
+            color: var(--color-text);
+            min-width: 100px;
+            flex-grow: 1;
+        }
+
+        .tree-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: var(--color-secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            min-width: 120px;
+            flex-grow: 1;
+        }
+
+        .btn:hover {
+            background-color: var(--color-accent);
+        }
+
+        .tree-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .tree-visualization {
+            flex: 1;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            min-height: 300px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .traversal-result {
+            flex: 1;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .tree-node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tree-node.highlight {
+            background-color: var(--color-accent);
+        }
+
+        .tree-edge {
+            position: absolute;
+            background-color: rgba(255,255,255,0.3);
+        }
+
+        .traversal-step {
+            background-color: rgba(255,255,255,0.1);
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive Adjustments */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .input-section, .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input, select, .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .tree-container {
+                flex-direction: column;
+            }
+
+            .tree-visualization, .traversal-result {
+                max-width: 100%;
+                width: 100%;
+            }
+
+            .tree-node {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Interactive Binary Tree Traversal Visualizer</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input type="number" id="node-value" placeholder="Node Value">
+                <select id="parent-select">
+                    <option value="">Select Parent (Optional)</option>
+                </select>
+                <select id="position-select">
+                    <option value="">Select Position</option>
+                    <option value="left">Left Child</option>
+                    <option value="right">Right Child</option>
+                </select>
+                <button class="btn" onclick="addNode()">Add Node</button>
+                <button class="btn" onclick="resetTree()">Reset Tree</button>
+            </div>
+        </div>
+
+        <div id="error-message"></div>
+
+        <div class="tree-controls">
+            <button class="btn" onclick="performTraversal('inorder')">Inorder Traversal</button>
+            <button class="btn" onclick="performTraversal('preorder')">Preorder Traversal</button>
+            <button class="btn" onclick="performTraversal('postorder')">Postorder Traversal</button>
+        </div>
+
+        <div class="tree-container">
+            <div id="tree-visualization" class="tree-visualization"></div>
+            <div id="traversal-result" class="traversal-result">
+                <h3>Traversal Result</h3>
+                <div id="traversal-steps"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TreeNode {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        class BinaryTree {
+            constructor() {
+                this.root = null;
+                this.nodes = [];
+            }
+
+            addNode(value, parentValue = null, position = null) {
+                const newNode = new TreeNode(value);
+
+                // If tree is empty, make this the root
+                if (!this.root) {
+                    this.root = newNode;
+                    this.nodes.push(newNode);
+                    return true;
+                }
+
+                // If no parent specified, find a place to add
+                if (!parentValue) {
+                    let placed = false;
+                    for (let node of this.nodes) {
+                        if (!node.left) {
+                            node.left = newNode;
+                            placed = true;
+                            break;
+                        }
+                        if (!node.right) {
+                            node.right = newNode;
+                            placed = true;
+                            break;
+                        }
+                    }
+                    if (placed) {
+                        this.nodes.push(newNode);
+                        return true;
+                    }
+                    return false;
+                }
+
+                // Find parent and add at specified position
+                const parentNode = this.nodes.find(n => n.value === parentValue);
+                if (!parentNode) return false;
+
+                if (position === 'left') {
+                    if (parentNode.left) return false;
+                    parentNode.left = newNode;
+                } else if (position === 'right') {
+                    if (parentNode.right) return false;
+                    parentNode.right = newNode;
+                } else {
+                    return false;
+                }
+
+                this.nodes.push(newNode);
+                return true;
+            }
+
+            inorderTraversal(node, result = []) {
+                if (node) {
+                    this.inorderTraversal(node.left, result);
+                    result.push(node.value);
+                    this.inorderTraversal(node.right, result);
+                }
+                return result;
+            }
+
+            preorderTraversal(node, result = []) {
+                if (node) {
+                    result.push(node.value);
+                    this.preorderTraversal(node.left, result);
+                    this.preorderTraversal(node.right, result);
+                }
+                return result;
+            }
+
+            postorderTraversal(node, result = []) {
+                if (node) {
+                    this.postorderTraversal(node.left, result);
+                    this.postorderTraversal(node.right, result);
+                    result.push(node.value);
+                }
+                return result;
+            }
+        }
+
+        const tree = new BinaryTree();
+        const treeVisualization = document.getElementById('tree-visualization');
+        const traversalSteps = document.getElementById('traversal-steps');
+        const nodeValueInput = document.getElementById('node-value');
+        const parentSelect = document.getElementById('parent-select');
+        const positionSelect = document.getElementById('position-select');
+        const errorMessage = document.getElementById('error-message');
+
+        function updateParentDropdown() {
+            // Populate parent dropdown with existing node values
+            parentSelect.innerHTML = '<option value="">Select Parent (Optional)</option>';
+            tree.nodes.forEach(node => {
+                const option = document.createElement('option');
+                option.value = node.value;
+                option.textContent = `Node ${node.value}`;
+                parentSelect.appendChild(option);
+            });
+        }
+
+        function addNode() {
+            // Clear previous error message
+            errorMessage.textContent = '';
+
+            // Get input values
+            const value = nodeValueInput.value.trim();
+            const parentValue = parentSelect.value;
+            const position = positionSelect.value;
+
+            // Validate input
+            if (!value || isNaN(value)) {
+                errorMessage.textContent = 'Please enter a valid node value.';
+                return;
+            }
+
+            // Add node with optional parent and position
+            const success = tree.addNode(
+                parseInt(value), 
+                parentValue ? parseInt(parentValue) : null, 
+                position
+            );
+
+            if (success) {
+                // Clear input fields
+                nodeValueInput.value = '';
+                parentSelect.value = '';
+                positionSelect.value = '';
+
+                // Update parent dropdown and visualization
+                updateParentDropdown();
+                visualizeTree(tree.root);
+            } else {
+                errorMessage.textContent = 'Unable to add node. Parent might be full or not exist.';
+            }
+        }
+
+        function resetTree() {
+            // Reset the tree and UI
+            tree.root = null;
+            tree.nodes = [];
+            treeVisualization.innerHTML = '';
+            traversalSteps.innerHTML = '';
+            errorMessage.textContent = '';
+            updateParentDropdown();
+        }
+
+        function visualizeTree(node, x = 600, y = 50, horizontalSpacing = 200) {
+            // Clear previous visualization
+            treeVisualization.innerHTML = '';
+
+            // Adjust spacing based on screen width
+            const screenWidth = window.innerWidth;
+            if (screenWidth <= 768) {
+                x = screenWidth / 2;
+                horizontalSpacing = screenWidth / 4;
+            }
+
+            function drawNode(node, x, y, depth = 0) {
+                if (!node) return;
+
+                // Create node element
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'tree-node';
+                nodeElement.textContent = node.value;
+                nodeElement.style.left = `${x}px`;
+                nodeElement.style.top = `${y}px`;
+
+                if (node.left) {
+                    const leftX = x - horizontalSpacing / (depth + 1);
+                    const leftY = y + 100;
+                    const edge = document.createElement('div');
+                    edge.className = 'tree-edge';
+                    const length = Math.sqrt(
+                        Math.pow(leftX - x, 2) + Math.pow(leftY - y, 2)
+                    );
+                    const angle = Math.atan2(leftY - y, leftX - x) * 180 / Math.PI;
+                    
+                    edge.style.width = `${length}px`;
+                    edge.style.height = '2px';
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    edge.style.left = `${x + 25}px`;
+                    edge.style.top = `${y + 25}px`;
+                    
+                    treeVisualization.appendChild(edge);
+                    drawNode(node.left, leftX, leftY, depth + 1);
+                }
+
+                if (node.right) {
+                    const rightX = x + horizontalSpacing / (depth + 1);
+                    const rightY = y + 100;
+                    const edge = document.createElement('div');
+                    edge.className = 'tree-edge';
+                    const length = Math.sqrt(
+                        Math.pow(rightX - x, 2) + Math.pow(rightY - y, 2)
+                    );
+                    const angle = Math.atan2(rightY - y, rightX - x) * 180 / Math.PI;
+                    
+                    edge.style.width = `${length}px`;
+                    edge.style.height = '2px';
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    edge.style.left = `${x + 25}px`;
+                    edge.style.top = `${y + 25}px`;
+                    
+                    treeVisualization.appendChild(edge);
+                    drawNode(node.right, rightX, rightY, depth + 1);
+                }
+
+                treeVisualization.appendChild(nodeElement);
+            }
+
+            drawNode(node);
+            updateParentDropdown();
+        }
+
+        function performTraversal(type) {
+            // Check if tree is empty
+            if (!tree.root) {
+                errorMessage.textContent = 'Please add nodes to the tree first.';
+                return;
+            }
+
+            // Clear previous steps
+            traversalSteps.innerHTML = '';
+            
+            let traversalResult;
+            let traversalName;
+
+            // Perform the selected traversal
+            switch(type) {
+                case 'inorder':
+                    traversalResult = tree.inorderTraversal(tree.root);
+                    traversalName = 'Inorder Traversal';
+                    break;
+                case 'preorder':
+                    traversalResult = tree.preorderTraversal(tree.root);
+                    traversalName = 'Preorder Traversal';
+                    break;
+                case 'postorder':
+                    traversalResult = tree.postorderTraversal(tree.root);
+                    traversalName = 'Postorder Traversal';
+                    break;
+            }
+
+            // Display traversal name
+            const nameElement = document.createElement('h4');
+            nameElement.textContent = traversalName;
+            traversalSteps.appendChild(nameElement);
+
+            // Visualize traversal steps
+            traversalResult.forEach((value, index) => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'traversal-step';
+                stepElement.textContent = `Step ${index + 1}: Node ${value}`;
+                traversalSteps.appendChild(stepElement);
+            });
+        }
+    </script>
+</body>
+</html>

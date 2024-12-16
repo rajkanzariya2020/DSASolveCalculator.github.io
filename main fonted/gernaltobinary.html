@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Tree to Binary Tree Converter</title>
+    <style>
+        :root {
+            --color-background: #0f1020;
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-accent: #e74c3c;
+            --color-text-light: #f1f1f4;
+            --color-text-dark: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px; /* Base font size for responsive typography */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-light);
+            min-height: 100vh;
+            line-height: 1.6;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+            margin-bottom: 1.25rem;
+        }
+
+        input, button {
+            padding: 0.625rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        input {
+            background: rgba(255,255,255,0.2);
+            color: var(--color-text-light);
+        }
+
+        button {
+            background: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.625rem;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: var(--color-secondary);
+        }
+
+        #steps-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 0.9375rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1.25rem;
+        }
+
+        .step {
+            background: rgba(255,255,255,0.1);
+            margin: 0.625rem 0;
+            padding: 0.625rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .step.current {
+            background: var(--color-primary);
+            transform: scale(1.02);
+        }
+
+        .tree-visualization {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1.25rem;
+            gap: 0.625rem;
+        }
+
+        .tree-node {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--color-secondary);
+            color: var(--color-text-dark);
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 0.3125rem;
+        }
+
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            width: 2px;
+            height: 10px;
+            background-color: var(--color-text-light);
+        }
+
+        /* Responsive adjustments */
+        @media screen and (min-width: 768px) {
+            .input-group {
+                flex-direction: row;
+            }
+
+            input {
+                flex-grow: 1;
+                margin-right: 0.625rem;
+            }
+
+            button {
+                width: auto;
+                margin-top: 0;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            html {
+                font-size: 18px;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .title {
+                font-size: 1.75rem;
+            }
+
+            html {
+                font-size: 14px;
+            }
+
+            .tree-node {
+                width: 30px;
+                height: 30px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">General Tree to Binary Tree Converter</h1>
+        
+        <div class="input-group">
+            <input type="text" id="tree-input" placeholder="Enter tree in format: root(child1,child2,child3)">
+            <button onclick="convertTree()">Convert</button>
+        </div>
+
+        <div id="steps-container"></div>
+        <div id="tree-visualization" class="tree-visualization"></div>
+    </div>
+
+    <script>
+        // Tree Node class
+        class TreeNode {
+            constructor(value) {
+                this.value = value;
+                this.left = null;
+                this.right = null;
+            }
+        }
+
+        // Parse input string to tree structure
+        function parseTree(input) {
+            const steps = [];
+            steps.push({
+                action: 'Start Parsing Input',
+                input: input
+            });
+
+            // Remove whitespaces
+            input = input.replace(/\s+/g, '');
+
+            // Validate basic structure
+            if (!input.match(/^[a-zA-Z0-9]+\(([a-zA-Z0-9]+,?)*\)$/)) {
+                throw new Error('Invalid tree format');
+            }
+
+            // Extract root and children
+            const rootMatch = input.match(/^([a-zA-Z0-9]+)\((.*)\)$/);
+            if (!rootMatch) {
+                throw new Error('Invalid tree format');
+            }
+
+            const root = rootMatch[1];
+            const children = rootMatch[2] ? rootMatch[2].split(',') : [];
+
+            steps.push({
+                action: 'Parsed Tree Structure',
+                root: root,
+                children: children
+            });
+
+            return { root, children, steps };
+        }
+
+        // Convert general tree to binary tree
+        function generalToBinaryTree(input) {
+            const { root, children, steps } = parseTree(input);
+            const rootNode = new TreeNode(root);
+            
+            steps.push({
+                action: 'Start Binary Tree Conversion',
+                root: root,
+                children: children
+            });
+
+            // If no children, return root
+            if (children.length === 0) {
+                steps.push({
+                    action: 'No Children - Simple Conversion',
+                    binaryTree: root
+                });
+                return { tree: rootNode, steps };
+            }
+
+            // First child becomes left child
+            rootNode.left = new TreeNode(children[0]);
+            let currentNode = rootNode.left;
+
+            // Subsequent children become right siblings
+            for (let i = 1; i < children.length; i++) {
+                currentNode.right = new TreeNode(children[i]);
+                currentNode = currentNode.right;
+
+                steps.push({
+                    action: `Add Child ${children[i]} as Right Sibling`,
+                    currentNode: currentNode.value
+                });
+            }
+
+            steps.push({
+                action: 'Conversion Complete',
+                binaryTree: 'Converted'
+            });
+
+            return { tree: rootNode, steps };
+        }
+
+        // Visualize tree
+        function visualizeTree(node, container) {
+            if (!node) return;
+
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'tree-node';
+            nodeElement.textContent = node.value;
+            container.appendChild(nodeElement);
+
+            if (node.left) {
+                const leftContainer = document.createElement('div');
+                leftContainer.style.marginLeft = '20px';
+                visualizeTree(node.left, leftContainer);
+                container.appendChild(leftContainer);
+            }
+
+            if (node.right) {
+                const rightContainer = document.createElement('div');
+                rightContainer.style.marginLeft = '20px';
+                visualizeTree(node.right, rightContainer);
+                container.appendChild(rightContainer);
+            }
+        }
+
+        // Main conversion function
+        function convertTree() {
+            const treeInput = document.getElementById('tree-input').value;
+            const stepsContainer = document.getElementById('steps-container');
+            const treeVisualization = document.getElementById('tree-visualization');
+            
+            // Clear previous results
+            stepsContainer.innerHTML = '';
+            treeVisualization.innerHTML = '';
+
+            try {
+                // Convert tree
+                const { tree, steps } = generalToBinaryTree(treeInput);
+
+                // Render conversion steps
+                steps.forEach((step, index) => {
+                    const stepElement = document.createElement('div');
+                    stepElement.className = `step ${index === steps.length - 1 ? 'current' : ''}`;
+                    
+                    stepElement.innerHTML = `
+                        <div>Action: ${step.action}</div>
+                        ${step.root ? `<div>Root: ${step.root}</div>` : ''}
+                        ${step.children ? `<div>Children: ${step.children.join(', ')}</div>` : ''}
+                        ${step.currentNode ? `<div>Current Node: ${step.currentNode}</div>` : ''}
+                    `;
+                    
+                    stepsContainer.appendChild(stepElement);
+                });
+
+                // Visualize binary tree
+                visualizeTree(tree, treeVisualization);
+
+            } catch (error) {
+                alert('Invalid tree: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

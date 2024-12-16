@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search Visualization</title>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* CSS Variables for consistent theming and easy customization */
+        /* CSS Variables for consistent theming and easy customization */
+:root {
+    --color-background: #0f1020;
+    --color-primary: #3498db;
+    --color-secondary: #2ecc71;
+    --color-accent: #e74c3c;
+    --color-text-light: #f1f1f4;
+    --color-text-dark: #2c3e50;
+    --gradient-primary: linear-gradient(135deg, #2c3e50, #3498db);
+    --gradient-secondary: linear-gradient(135deg, #27ae60, #2ecc71);
+}
+
+/* CSS Reset and Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Arial', sans-serif;
+    background: var(--color-background);
+    color: var(--color-text-light);
+    line-height: 1.6;
+}
+
+/* Main Container Styling */
+.app-container {
+    width: 90%;
+    max-width: 1400px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+}
+
+/* Responsive Title */
+.main-title {
+    text-align: center;
+    font-size: 3rem;
+    background: linear-gradient(to right, #3498db, #2ecc71);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 30px;
+    text-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* Flexible Controls Layout */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+/* Interactive Elements */
+input, select, button {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background: var(--color-primary);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.stop-btn {
+    background-color: var(--color-accent) !important;
+}
+
+/* Visualization Container */
+#array-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 300px;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.array-bar {
+    width: 30px;
+    background: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    border-radius: 5px 5px 0 0;
+    transition: all 0.3s ease;
+}
+
+/* Search Visualization States */
+.searching {
+    background: var(--color-accent) !important;
+    transform: scale(1.1);
+}
+
+.found {
+    background: var(--color-secondary) !important;
+}
+
+.current-range {
+    background: rgba(52, 152, 219, 0.5) !important;
+}
+
+/* Step Log Styling */
+#step-log {
+    max-height: 250px;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.step-entry {
+    background: rgba(255,255,255,0.1);
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#current-step-info {
+    text-align: center;
+    margin: 10px 0;
+    color: var(--color-secondary);
+    font-size: 1.2rem;
+}
+
+/* Mobile-specific Media Query */
+@media (max-width: 768px) {
+    .app-container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px; /* Increased gap for better spacing */
+    }
+
+    .main-title {
+        font-size: 2rem;
+    }
+
+    #array-container {
+        height: 200px;
+        max-height: 250px; /* Ensure array fits well even on smaller screens */
+    }
+
+    .array-bar {
+        width: 20px;
+        height: auto; /* Allow bars to adjust based on content */
+    }
+
+    button, input, select {
+        width: 100%; /* Full width buttons and inputs */
+        padding: 15px; /* Larger tap targets */
+    }
+
+    .control-group {
+        width: 100%; /* Ensure control groups span full width */
+    }
+
+    #step-log {
+        max-height: 200px; /* Reduced step log height for mobile */
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <h1 class="main-title">Binary Search Visualization</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <select id="array-type">
+                    <option value="manual">Manual Input</option>
+                    <option value="sorted">Sorted Ascending</option>
+                    <option value="random">Random</option>
+                </select>
+                <input type="number" id="array-size" placeholder="Array Size" min="5" max="50" value="20">
+                <input type="text" id="manual-array" placeholder="Enter comma-separated numbers" style="display:none;">
+            </div>
+            
+            <div class="control-group">
+                <input type="number" id="target" placeholder="Target" min="1">
+                <button onclick="generateArray()">Generate/Set Array</button>
+                <button onclick="startBinarySearch()">Start Search</button>
+                <button onclick="stopSearch()" class="stop-btn">Stop</button>
+            </div>
+        </div>
+
+        <div id="current-step-info"></div>
+
+        <div id="array-container"></div>
+
+        <div id="step-log"></div>
+    </div>
+
+    <script>
+        // JavaScript remains the same as in the previous example
+        let array = [];
+        let target = 0;
+        let searchInProgress = false;
+        let steps = [];
+        let currentStep = 0;
+
+        // Update array type selector to show/hide manual input
+        document.getElementById('array-type').addEventListener('change', function() {
+            const manualInput = document.getElementById('manual-array');
+            manualInput.style.display = this.value === 'manual' ? 'block' : 'none';
+        });
+
+        function generateArray() {
+            const arrayType = document.getElementById('array-type').value;
+            const arraySize = parseInt(document.getElementById('array-size').value);
+            
+            // Reset visualization
+            resetVisualization();
+            
+            switch(arrayType) {
+                case 'sorted':
+                    // Generate sorted ascending array
+                    array = Array.from({length: arraySize}, (_, i) => i * 3 + 1);
+                    break;
+                
+                case 'random':
+                    // Generate unsorted random array and then sort it
+                    array = Array.from({length: arraySize}, () => Math.floor(Math.random() * 100) + 1);
+                    array.sort((a, b) => a - b);
+                    break;
+                
+                case 'manual':
+                    // Parse manual input
+                    const manualInput = document.getElementById('manual-array').value;
+                    try {
+                        array = manualInput.split(',').map(num => {
+                            const parsed = parseInt(num.trim());
+                            if (isNaN(parsed)) throw new Error('Invalid input');
+                            return parsed;
+                        });
+                        
+                        // Ensure array is sorted
+                        array.sort((a, b) => a - b);
+                    } catch (error) {
+                        alert('Please enter a valid comma-separated list of numbers');
+                        return;
+                    }
+                    break;
+            }
+            
+            // Render initial array
+            renderArray(array);
+        }
+
+        function resetVisualization() {
+            searchInProgress = false;
+            currentStep = 0;
+            steps = [];
+            document.getElementById('current-step-info').innerHTML = '';
+            document.getElementById('step-log').innerHTML = '';
+        }
+
+        function renderArray(arr, currentRange = [], foundIndex = -1) {
+            const arrayContainer = document.getElementById('array-container');
+            arrayContainer.innerHTML = '';
+
+            // Find max value for proportional height
+            const maxValue = Math.max(...arr);
+
+            arr.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'array-bar';
+                
+                // Height proportional to value
+                bar.style.height = `${(value / maxValue) * 250}px`;
+                
+                // Add text inside bar
+                bar.textContent = value;
+
+                // Highlight current search range
+                if (currentRange.includes(index)) {
+                    bar.classList.add('current-range');
+                }
+
+                // Highlight found element
+                if (index === foundIndex) {
+                    bar.classList.add('found');
+                }
+
+                arrayContainer.appendChild(bar);
+            });
+        }
+
+        function binarySearch() {
+            target = parseInt(document.getElementById('target').value);
+            
+            if (!target || target < array[0] || target > array[array.length - 1]) {
+                alert('Please enter a valid target within the array range');
+                return null;
+            }
+
+            steps = [];
+            let left = 0;
+            let right = array.length - 1;
+
+            while (left <= right) {
+                const mid = Math.floor((left + right) / 2);
+
+                // Log the current search step
+                steps.push({
+                    description: `Searching in range [${left}, ${right}]`,
+                    currentRange: [left, mid, right],
+                    value: array[mid],
+                    target: target
+                });
+
+                if (array[mid] === target) {
+                    steps.push({
+                        description: `Target ${target} found at index ${mid}`,
+                        foundIndex: mid,
+                        final: true
+                    });
+                    return mid;
+                } else if (array[mid] < target) {
+                    left = mid + 1;
+                } else {
+                    right = mid - 1;
+                }
+            }
+
+            steps.push({
+                description: `Target ${target} not found`,
+                final: true
+            });
+
+            return -1;
+        }  
+
+        function addStepLog(message) {
+            const stepLogElement = document.getElementById('step-log');
+            const stepEntry = document.createElement('div');
+            stepEntry.className = 'step-entry';
+            stepEntry.innerHTML = `<i class="fas fa-search"></i> ${message}`;
+            stepLogElement.insertBefore(stepEntry, stepLogElement.firstChild);
+        }
+
+        function startBinarySearch() {
+            if (searchInProgress || array.length === 0) return;
+
+            searchInProgress = true;
+            binarySearch();
+            visualizeSearchSteps();
+        }
+
+        function stopSearch() {
+            searchInProgress = false;
+            document.getElementById('current-step-info').textContent = 'Search Stopped';
+        }
+
+        function visualizeSearchSteps() {
+            const currentStepInfo = document.getElementById('current-step-info');
+
+            if (currentStep < steps.length && searchInProgress) {
+                const currentStepData = steps[currentStep];
+                
+                // Update current step info
+                currentStepInfo.textContent = currentStepData.description || '';
+
+                // Render array with current state
+                renderArray(
+                    array, 
+                    currentStepData.currentRange || [],
+                    currentStepData.foundIndex ?? -1
+                );
+
+                // Log the step
+                if (currentStepData.description) {
+                    addStepLog(currentStepData.description);
+                }
+
+                // Stop if final step
+                if (currentStepData.final) {
+                    searchInProgress = false;
+                }
+
+                currentStep++;
+
+                // Use setTimeout for step visualization with dynamic timing
+                setTimeout(visualizeSearchSteps, 600);
+            } else {
+                searchInProgress = false;
+                currentStepInfo.textContent = 'Search Complete!';
+            }
+        }
+
+        // Initialize with a sorted array
+        generateArray();
+    </script>
+</body>
+</html>

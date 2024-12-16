@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Sort Visualizer</title>
+    <style>
+        :root {
+            --color-background: #0f1020;
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-accent: #e74c3c;
+            --color-text-light: #f1f1f4;
+            --color-text-dark: #2c3e50;
+            --color-pivot: #9b59b6;
+            --gradient-primary: linear-gradient(135deg, #2c3e50, #3498db);
+            --gradient-secondary: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            min-width: 280px;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-light);
+            line-height: 1.6;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 10px;
+            justify-content: center;
+        }
+
+        .control-group label {
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+
+        input, select, button {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            background: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 100px;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"] {
+            width: 80px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #array-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            min-height: 250px;
+            max-height: 300px;
+            gap: 4px;
+            margin: 20px 0;
+            overflow-x: auto;
+            padding: 0 10px;
+        }
+
+        .array-bar {
+            width: 25px;
+            min-width: 20px;
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
+            font-size: 0.7rem;
+        }
+
+        .comparing {
+            background: var(--color-accent) !important;
+            transform: scale(1.1);
+        }
+
+        .sorted {
+            background: var(--color-secondary) !important;
+        }
+
+        .pivot {
+            background: var(--color-pivot) !important;
+        }
+
+        #step-details {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        #current-step-info {
+            color: var(--color-secondary);
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        #step-log {
+            max-height: 250px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .step-entry {
+            background: rgba(255,255,255,0.1);
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            word-break: break-word;
+        }
+
+        .direct-answer-btn {
+            background-color: var(--color-secondary) !important;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            #controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            input, select, button {
+                width: 100%;
+                max-width: none;
+                margin-bottom: 10px;
+            }
+
+            #array-container {
+                min-height: 200px;
+                max-height: 250px;
+            }
+
+            .array-bar {
+                width: 15px;
+                min-width: 10px;
+                font-size: 0.6rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            #array-container {
+                min-height: 150px;
+                max-height: 200px;
+            }
+
+            .array-bar {
+                width: 10px;
+                min-width: 8px;
+                font-size: 0.5rem;
+            }
+
+            #step-details {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quick Sort Visualization</h1>
+        
+        <div id="controls">
+            <div class="control-group">
+                <label>Generation Method:</label>
+                <select id="generation-type">
+                    <option value="manual">Manual Input</option>
+                    <option value="random" selected>Random Numbers</option>
+                    <option value="reverse-sorted">Reverse Sorted</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <input type="number" id="array-size" placeholder="Size" min="5" max="50" value="10">
+                <input type="number" id="min-value" placeholder="Min" value="1">
+                <input type="number" id="max-value" placeholder="Max" value="100">
+                <input type="text" id="array-input" placeholder="Manual Numbers">
+            </div>
+
+            <div class="control-group">
+                <button onclick="generateArray()">Generate</button>
+                <button onclick="startQuickSort()">Sort</button>
+                <button onclick="stopSorting()">Stop</button>
+                <button class="direct-answer-btn" onclick="showDirectAnswer()">Direct Result</button>
+            </div>
+        </div>
+
+        <div id="array-container"></div>
+
+        <div id="step-details">
+            <div id="current-step-info"></div>
+            <div id="step-log"></div>
+        </div>
+    </div>
+
+    <script>
+        class QuickSortVisualizer {
+    constructor() {
+        // Core state management
+        this.array = [];
+        this.originalArray = [];
+        this.sortingInProgress = false;
+        this.currentStep = 0;
+        this.steps = [];
+        this.stepLog = [];
+        
+        // Performance tracking
+        this.metrics = {
+            comparisons: 0,
+            swaps: 0,
+            recursiveCalls: 0
+        };
+
+        // DOM element references
+        this.elements = {
+            arrayContainer: document.getElementById('array-container'),
+            currentStepInfo: document.getElementById('current-step-info'),
+            stepLog: document.getElementById('step-log'),
+            generationType: document.getElementById('generation-type'),
+            arraySizeInput: document.getElementById('array-size'),
+            minValueInput: document.getElementById('min-value'),
+            maxValueInput: document.getElementById('max-value'),
+            manualInput: document.getElementById('array-input')
+        };
+
+        // Bind methods to maintain context
+        this.bindMethods();
+        this.initializeEventListeners();
+    }
+
+    bindMethods() {
+        this.generateArray = this.generateArray.bind(this);
+        this.startQuickSort = this.startQuickSort.bind(this);
+        this.stopSorting = this.stopSorting.bind(this);
+        this.showDirectAnswer = this.showDirectAnswer.bind(this);
+    }
+
+    initializeEventListeners() {
+        // Connect UI buttons to methods
+        document.querySelector('button[onclick="generateArray()"]')
+            .addEventListener('click', this.generateArray);
+        
+        document.querySelector('button[onclick="startQuickSort()"]')
+            .addEventListener('click', this.startQuickSort);
+        
+        document.querySelector('button[onclick="stopSorting()"]')
+            .addEventListener('click', this.stopSorting);
+        
+        document.querySelector('button[onclick="showDirectAnswer()"]')
+            .addEventListener('click', this.showDirectAnswer);
+    }
+
+    // Array Generation Methods
+    generateArray() {
+        this.resetVisualization();
+
+        const generationType = this.elements.generationType.value;
+        const arraySize = parseInt(this.elements.arraySizeInput.value);
+        const minValue = parseInt(this.elements.minValueInput.value);
+        const maxValue = parseInt(this.elements.maxValueInput.value);
+        const manualInput = this.elements.manualInput.value;
+
+        // Validate and generate array
+        try {
+            this.array = this.createArray(generationType, arraySize, minValue, maxValue, manualInput);
+            this.originalArray = [...this.array];
+            this.renderArray(this.array);
+        } catch (error) {
+            this.showError(error.message);
+        }
+    }
+
+    createArray(type, size, min, max, manualInput) {
+        if (type === 'manual') {
+            const parsedArray = manualInput 
+                ? manualInput.split(',').map(num => {
+                    const parsed = parseInt(num.trim());
+                    if (isNaN(parsed)) throw new Error('Invalid number in manual input');
+                    return parsed;
+                })
+                : [];
+            
+            return parsedArray.length ? parsedArray : 
+                this.generateSpecialArray('random', size, min, max);
+        }
+
+        return this.generateSpecialArray(type, size, min, max);
+    }
+
+    generateSpecialArray(type, size, min, max) {
+        const generators = {
+            'random': () => Array.from({length: size}, () => 
+                Math.floor(Math.random() * (max - min + 1)) + min
+            ),
+            'reverse-sorted': () => Array.from({length: size}, (_, i) => 
+                max - Math.floor((i / (size - 1)) * (max - min))
+            )
+        };
+
+        return generators[type] ? generators[type]() : [];
+    }
+
+    // Visualization Methods
+    renderArray(arr, options = {}) {
+        const { 
+            highlightIndices = [], 
+            sortedIndices = [], 
+            pivotIndex = -1 
+        } = options;
+
+        this.elements.arrayContainer.innerHTML = '';
+        const maxVal = Math.max(...arr);
+        
+        arr.forEach((value, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'array-bar';
+            bar.style.height = `${(value / maxVal) * 250}px`;
+            bar.textContent = value;
+
+            // Apply visual states
+            if (highlightIndices.includes(index)) bar.classList.add('comparing');
+            if (sortedIndices.includes(index)) bar.classList.add('sorted');
+            if (index === pivotIndex) bar.classList.add('pivot');
+
+            this.elements.arrayContainer.appendChild(bar);
+        });
+    }
+
+    // Quick Sort Core Algorithm
+    async quickSort(arr = this.array) {
+        // Reset metrics and steps
+        this.resetMetrics();
+        this.steps = [{ 
+            array: [...arr], 
+            description: 'Initial array before Quick Sort' 
+        }];
+
+        await this.quickSortRecursive(arr, 0, arr.length - 1);
+
+        // Final sorted array step
+        this.steps.push({
+            array: [...arr],
+            description: 'Quick Sort Complete',
+            stats: {
+                comparisons: this.metrics.comparisons,
+                swaps: this.metrics.swaps,
+                recursiveCalls: this.metrics.recursiveCalls
+            }
+        });
+
+        return arr;
+    }
+
+    async quickSortRecursive(arr, low, high) {
+        this.metrics.recursiveCalls++;
+
+        if (low < high) {
+            const pivotIndex = await this.partition(arr, low, high);
+            
+            await this.quickSortRecursive(arr, low, pivotIndex - 1);
+            await this.quickSortRecursive(arr, pivotIndex + 1, high);
+        }
+    }
+
+    async partition(arr, low, high) {
+        const pivot = arr[high];
+        
+        // Log pivot selection
+        this.addStep({
+            array: [...arr],
+            description: `Selecting pivot: ${pivot}`,
+            pivotIndex: high
+        });
+
+        let i = low - 1;
+
+        for (let j = low; j < high; j++) {
+            this.metrics.comparisons++;
+            
+            if (arr[j] < pivot) {
+                i++;
+                this.swap(arr, i, j);
+            }
+        }
+
+        // Place pivot in correct position
+        this.swap(arr, i + 1, high);
+
+        return i + 1;
+    }
+
+    swap(arr, i, j) {
+        if (i !== j) {
+            this.metrics.swaps++;
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+            
+            // Log swap step
+            this.addStep({
+                array: [...arr],
+                description: `Swapping ${arr[i]} and ${arr[j]}`,
+                comparing: [i, j]
+            });
+        }
+    }
+
+    // Visualization Control Methods
+    async startQuickSort() {
+        if (this.sortingInProgress || this.array.length === 0) return;
+
+        this.sortingInProgress = true;
+        await this.quickSort();
+        this.visualizeSortingSteps();
+    }
+
+    visualizeSortingSteps() {
+        if (this.currentStep < this.steps.length && this.sortingInProgress) {
+            const currentStepData = this.steps[this.currentStep];
+            
+            // Update step info
+            this.elements.currentStepInfo.textContent = currentStepData.description || '';
+
+            // Render array
+            this.renderArray(
+                currentStepData.array, 
+                {
+                    highlightIndices: currentStepData.comparing || [],
+                    pivotIndex: currentStepData.pivotIndex
+                }
+            );
+
+            // Display statistics on final step
+            if (currentStepData.stats) {
+                this.elements.currentStepInfo.innerHTML += `
+                    <br>Comparisons: ${currentStepData.stats.comparisons}
+                    Swaps: ${currentStepData.stats.swaps}
+                    Recursive Calls: ${currentStepData.stats.recursiveCalls}
+                `;
+            }
+
+            this.currentStep++;
+            setTimeout(() => this.visualizeSortingSteps(), 500);
+        } else {
+            this.sortingInProgress = false;
+            this.elements.currentStepInfo.textContent = 'Sorting Complete!';
+        }
+    }
+
+    // Utility Methods
+    resetVisualization() {
+        this.sortingInProgress = false;
+        this.currentStep = 0;
+        this.steps = [];
+        this.stepLog = [];
+        this.elements.currentStepInfo.innerHTML = '';
+        this.elements.stepLog.innerHTML = '';
+    }
+
+    resetMetrics() {
+        this.metrics = {
+            comparisons: 0,
+            swaps: 0,
+            recursiveCalls: 0
+        };
+    }
+
+    addStep(stepData) {
+        this.steps.push(stepData);
+    }
+
+    stopSorting() {
+        this.sortingInProgress = false;
+        this.elements.currentStepInfo.textContent = 'Sorting Stopped';
+    }
+
+    showDirectAnswer() {
+        const sortedArray = [...this.originalArray].sort((a, b) => a - b);
+        
+        // Clear previous visualization
+        this.elements.arrayContainer.innerHTML = '';
+
+        // Render sorted array
+        this.renderArray(sortedArray);
+
+        // Update step info
+        this.elements.currentStepInfo.innerHTML = `
+            Direct Sorted Result: [${sortedArray.join(', ')}]
+        `;
+
+        // Clear step log
+        this.elements.stepLog.innerHTML = '';
+        const directAnswerEntry = document.createElement('div');
+        directAnswerEntry.className = 'step-entry';
+        directAnswerEntry.textContent = 'Directly sorted array shown';
+        this.elements.stepLog.appendChild(directAnswerEntry);
+    }
+
+    showError(message) {
+        alert(message);
+    }
+}
+
+// Initialize the visualizer when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const quickSortVisualizer = new QuickSortVisualizer();
+    // Generate initial random array
+    quickSortVisualizer.generateArray();
+});
+
+// Expose global functions for inline event handlers
+function generateArray() {
+    const visualizer = window.quickSortVisualizer || 
+        (window.quickSortVisualizer = new QuickSortVisualizer());
+    visualizer.generateArray();
+}
+
+function startQuickSort() {
+    const visualizer = window.quickSortVisualizer || 
+        (window.quickSortVisualizer = new QuickSortVisualizer());
+    visualizer.startQuickSort();
+}
+
+function stopSorting() {
+    const visualizer = window.quickSortVisualizer || 
+        (window.quickSortVisualizer = new QuickSortVisualizer());
+    visualizer.stopSorting();
+}
+
+function showDirectAnswer() {
+    const visualizer = window.quickSortVisualizer || 
+        (window.quickSortVisualizer = new QuickSortVisualizer());
+    visualizer.showDirectAnswer();
+}
+        // [The entire previous JavaScript code remains the same]
+        // Only the script content from the previous implementation is used here
+    </script>
+</body>
+</html>

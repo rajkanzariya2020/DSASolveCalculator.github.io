@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infix to Postfix Converter & Evaluator</title>
+    <style>
+        :root {
+            --color-background: #0f1020;
+            --color-primary: #3498db;
+            --color-secondary: #2ecc71;
+            --color-accent: #e74c3c;
+            --color-text-light: #f1f1f4;
+            --color-text-dark: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--color-background);
+            color: var(--color-text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+            padding: 15px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        input, button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        input {
+            background: rgba(255,255,255,0.2);
+            color: var(--color-text-light);
+        }
+
+        button {
+            background: var(--color-primary);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 200px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: var(--color-secondary);
+        }
+
+        #steps-container, #evaluation-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .step, .eval-step {
+            background: rgba(255,255,255,0.1);
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .step.current, .eval-step.current {
+            background: var(--color-primary);
+            transform: scale(1.02);
+        }
+
+        .step-details, .eval-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stack-display {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stack-item {
+            background: var(--color-secondary);
+            color: var(--color-text-dark);
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 2px;
+        }
+
+        .result-box {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+
+        /* Responsive Adjustments */
+        @media screen and (min-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .input-group {
+                flex-direction: row;
+            }
+
+            .input-wrapper {
+                flex-grow: 1;
+            }
+
+            .step, .eval-step {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .step-details, .eval-details {
+                flex-direction: row;
+                gap: 15px;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Infix to Postfix Converter & Evaluator</h1>
+        
+        <div class="input-group">
+            <div class="input-wrapper">
+                <input type="text" id="expr-input" placeholder="Enter expression with numeric values (e.g., 3+4*2)">
+                <button onclick="processExpression()">Convert & Evaluate</button>
+            </div>
+        </div>
+
+        <div id="steps-container"></div>
+        <div id="evaluation-container"></div>
+    </div>
+
+    <script>
+        // Operator precedence function
+        function getPrecedence(operator) {
+            switch(operator) {
+                case '+':
+                case '-':
+                    return 1;
+                case '*':
+                case '/':
+                    return 2;
+                case '^':
+                    return 3;
+                default:
+                    return 0;
+            }
+        }
+
+        // Check if character is an operator
+        function isOperator(char) {
+            return ['+', '-', '*', '/', '^'].includes(char);
+        }
+
+        // Infix to Postfix Conversion
+        function convertInfixToPostfix(infixInput) {
+            const postfixSteps = [];
+            const stack = [];
+            let postfix = '';
+
+            postfixSteps.push({
+                action: 'Start',
+                input: infixInput,
+                stack: [],
+                output: ''
+            });
+
+            for (let char of infixInput) {
+                // If operand, add to output
+                if (/[0-9]/.test(char)) {
+                    postfix += char;
+                    postfixSteps.push({
+                        action: `Add operand ${char}`,
+                        input: infixInput,
+                        stack: [...stack],
+                        output: postfix
+                    });
+                } 
+                // If opening parenthesis, push to stack
+                else if (char === '(') {
+                    stack.push(char);
+                    postfixSteps.push({
+                        action: `Push '(' to stack`,
+                        input: infixInput,
+                        stack: [...stack],
+                        output: postfix
+                    });
+                } 
+                // If closing parenthesis
+                else if (char === ')') {
+                    while (stack.length > 0 && stack[stack.length - 1] !== '(') {
+                        const topOperator = stack.pop();
+                        postfix += topOperator;
+                        postfixSteps.push({
+                            action: `Pop operator ${topOperator} from stack`,
+                            input: infixInput,
+                            stack: [...stack],
+                            output: postfix
+                        });
+                    }
+                    // Remove the opening parenthesis
+                    if (stack.length > 0 && stack[stack.length - 1] === '(') {
+                        stack.pop();
+                        postfixSteps.push({
+                            action: `Remove matching '('`,
+                            input: infixInput,
+                            stack: [...stack],
+                            output: postfix
+                        });
+                    }
+                } 
+                // If operator
+                else if (isOperator(char)) {
+                    while (
+                        stack.length > 0 && 
+                        getPrecedence(stack[stack.length - 1]) >= getPrecedence(char)
+                    ) {
+                        const topOperator = stack.pop();
+                        postfix += topOperator;
+                        postfixSteps.push({
+                            action: `Pop higher precedence operator ${topOperator}`,
+                            input: infixInput,
+                            stack: [...stack],
+                            output: postfix
+                        });
+                    }
+                    stack.push(char);
+                    postfixSteps.push({
+                        action: `Push operator ${char} to stack`,
+                        input: infixInput,
+                        stack: [...stack],
+                        output: postfix
+                    });
+                }
+            }
+
+            // Pop remaining operators from stack
+            while (stack.length > 0) {
+                const topOperator = stack.pop();
+                postfix += topOperator;
+                postfixSteps.push({
+                    action: `Pop remaining operator ${topOperator}`,
+                    input: infixInput,
+                    stack: [...stack],
+                    output: postfix
+                });
+            }
+
+            // Final step
+            postfixSteps.push({
+                action: 'Conversion Complete',
+                input: infixInput,
+                stack: [],
+                output: postfix,
+                final: true
+            });
+
+            return { postfix, postfixSteps };
+        }
+
+        // Postfix Evaluation
+        function evaluatePostfix(postfix) {
+            const evaluationSteps = [];
+            const stack = [];
+
+            evaluationSteps.push({
+                action: 'Start Evaluation',
+                input: postfix,
+                stack: [],
+                currentToken: ''
+            });
+
+            for (let char of postfix) {
+                // If operand, push to stack
+                if (/[0-9]/.test(char)) {
+                    stack.push(parseInt(char));
+                    evaluationSteps.push({
+                        action: `Push operand ${char}`,
+                        input: postfix,
+                        stack: [...stack],
+                        currentToken: char
+                    });
+                } 
+                // If operator, perform operation
+                else if (isOperator(char)) {
+                    // Ensure we have at least two operands
+                    if (stack.length < 2) {
+                        throw new Error('Invalid postfix expression');
+                    }
+
+                    // Pop two operands
+                    const b = stack.pop();
+                    const a = stack.pop();
+                    
+                    // Perform operation
+                    let result;
+                    switch(char) {
+                        case '+':
+                            result = a + b;
+                            break;
+                        case '-':
+                            result = a - b;
+                            break;
+                        case '*':
+                            result = a * b;
+                            break;
+                        case '/':
+                            result = a / b;
+                            break;
+                        case '^':
+                            result = Math.pow(a, b);
+                            break;
+                    }
+
+                    // Push result back to stack
+                    stack.push(result);
+                    
+                    evaluationSteps.push({
+                        action: `Apply ${char} operator: ${a} ${char} ${b} = ${result}`,
+                        input: postfix,
+                        stack: [...stack],
+                        currentToken: char
+                    });
+                }
+            }
+
+            // Final result should be the only item in stack
+            if (stack.length !== 1) {
+                throw new Error('Invalid postfix expression');
+            }
+
+            evaluationSteps.push({
+                action: 'Evaluation Complete',
+                input: postfix,
+                stack: [...stack],
+                currentToken: '',
+                final: true
+            });
+
+            return { result: stack[0], evaluationSteps };
+        }
+
+        // Main processing function
+        function processExpression() {
+            const infixInput = document.getElementById('expr-input').value;
+            const stepsContainer = document.getElementById('steps-container');
+            const evaluationContainer = document.getElementById('evaluation-container');
+            
+            // Clear previous results
+            stepsContainer.innerHTML = '';
+            evaluationContainer.innerHTML = '';
+
+            try {
+                // Convert Infix to Postfix
+                const { postfix, postfixSteps } = convertInfixToPostfix(infixInput);
+
+                // Render conversion steps
+                postfixSteps.forEach((step, index) => {
+                    const stepElement = document.createElement('div');
+                    stepElement.className = `step ${index === postfixSteps.length - 1 ? 'current' : ''}`;
+                    
+                    stepElement.innerHTML = `
+                        <div class="step-details">
+                            <div>Action: ${step.action}</div>
+                            <div class="stack-display">
+                                Stack: 
+                                ${step.stack.map(item => 
+                                    `<span class="stack-item">${item}</span>`
+                                ).join('') || 'Empty'}
+                            </div>
+                        </div>
+                        <div>Output: ${step.output || 'None'}</div>
+                    `;
+                    
+                    stepsContainer.appendChild(stepElement);
+                });
+
+                // Create Postfix Result
+                const postfixResultElement = document.createElement('div');
+                postfixResultElement.className = 'result-box';
+                postfixResultElement.textContent = `Postfix Expression: ${postfix}`;
+                stepsContainer.appendChild(postfixResultElement);
+
+                // Evaluate Postfix
+                const { result, evaluationSteps } = evaluatePostfix(postfix);
+
+                // Render evaluation steps
+                evaluationSteps.forEach((step, index) => {
+                    const stepElement = document.createElement('div');
+                    stepElement.className = `eval-step ${index === evaluationSteps.length - 1 ? 'current' : ''}`;
+                    
+                    stepElement.innerHTML = `
+                        <div class="eval-details">
+                            <div>Action: ${step.action}</div>
+                            <div class="stack-display">
+                                Stack: 
+                                ${step.stack.map(item => 
+                                    `<span class="stack-item">${item}</span>`
+                                ).join('') || 'Empty'}
+                            </div>
+                        </div>
+                        <div>Current Token: ${step.currentToken || 'None'}</div>
+                    `;
+                    
+                    evaluationContainer.appendChild(stepElement);
+                });
+
+                // Create Final Result
+                const finalResultElement = document.createElement('div');
+                finalResultElement.className = 'result-box';
+                finalResultElement.textContent = `Final Result: ${result}`;
+                evaluationContainer.appendChild(finalResultElement);
+
+            } catch (error) {
+                alert('Invalid expression: ' + error.message);
+            }
+        }
+
+        // Optional: Add keyboard support for Enter key
+        document.getElementById('expr-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                processExpression();
+            }
+        });
+    </script>
+</body>
+</html>
